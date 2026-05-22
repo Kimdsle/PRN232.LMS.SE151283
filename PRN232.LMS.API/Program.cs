@@ -2,6 +2,8 @@
 using PRN232.LMS.Repositories.Data;
 using PRN232.LMS.Repositories.Interfaces;
 using PRN232.LMS.Repositories.Repositories;
+using PRN232.LMS.Services.Interfaces;
+using PRN232.LMS.Services.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +21,13 @@ builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
+
+// Service registrations (Phase 3)
+builder.Services.AddScoped<ISemesterService, SemesterService>();
+builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<ISubjectService, SubjectService>();
+builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 
 var app = builder.Build();
 
