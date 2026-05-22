@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PRN232.LMS.Repositories.Entities;
 using PRN232.LMS.Repositories.Interfaces;
+using PRN232.LMS.Services.Helpers;
 using PRN232.LMS.Services.Interfaces;
 using PRN232.LMS.Services.Models;
 
@@ -48,12 +49,18 @@ public class EnrollmentService : IEnrollmentService
 
     public async Task<BusinessResult<PagedResult<EnrollmentBusinessModel>>> ListAsync(ListQueryOptions options)
     {
-        var query = _repo.Query()
-            .Include(e => e.Student)
-            .Include(e => e.Course);
+        IQueryable<Enrollment> query = _repo.Query();
+
+        if (QueryHelper.ShouldExpand(options.Expand, "student"))
+            query = query.Include(e => e.Student);
+        if (QueryHelper.ShouldExpand(options.Expand, "course"))
+            query = query.Include(e => e.Course);
+
+        query = QueryHelper.ApplySearch(query, options.Search, x => x.Status);
+        query = QueryHelper.ApplySort(query, options.Sort, "EnrollmentId");
+
         var total = await query.CountAsync();
         var items = await query
-            .OrderBy(x => x.EnrollmentId)
             .Skip((options.Page - 1) * options.Size)
             .Take(options.Size)
             .ToListAsync();

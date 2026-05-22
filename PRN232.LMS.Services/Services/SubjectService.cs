@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PRN232.LMS.Repositories.Entities;
 using PRN232.LMS.Repositories.Interfaces;
+using PRN232.LMS.Services.Helpers;
 using PRN232.LMS.Services.Interfaces;
 using PRN232.LMS.Services.Models;
 
@@ -42,9 +43,12 @@ public class SubjectService : ISubjectService
     public async Task<BusinessResult<PagedResult<SubjectBusinessModel>>> ListAsync(ListQueryOptions options)
     {
         var query = _repo.Query();
+
+        query = QueryHelper.ApplySearch(query, options.Search, x => x.SubjectName, x => x.SubjectCode);
+        query = QueryHelper.ApplySort(query, options.Sort, "SubjectId");
+
         var total = await query.CountAsync();
         var items = await query
-            .OrderBy(x => x.SubjectId)
             .Skip((options.Page - 1) * options.Size)
             .Take(options.Size)
             .ToListAsync();

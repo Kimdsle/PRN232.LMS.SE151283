@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PRN232.LMS.Repositories.Entities;
 using PRN232.LMS.Repositories.Interfaces;
+using PRN232.LMS.Services.Helpers;
 using PRN232.LMS.Services.Interfaces;
 using PRN232.LMS.Services.Models;
 
@@ -42,10 +43,16 @@ public class CourseService : ICourseService
 
     public async Task<BusinessResult<PagedResult<CourseBusinessModel>>> ListAsync(ListQueryOptions options)
     {
-        var query = _repo.Query().Include(c => c.Semester);
+        IQueryable<Course> query = _repo.Query();
+
+        if (QueryHelper.ShouldExpand(options.Expand, "semester"))
+            query = query.Include(c => c.Semester);
+
+        query = QueryHelper.ApplySearch(query, options.Search, x => x.CourseName);
+        query = QueryHelper.ApplySort(query, options.Sort, "CourseId");
+
         var total = await query.CountAsync();
         var items = await query
-            .OrderBy(x => x.CourseId)
             .Skip((options.Page - 1) * options.Size)
             .Take(options.Size)
             .ToListAsync();
