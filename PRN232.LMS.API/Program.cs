@@ -29,7 +29,6 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 
-    // Include the XML documentation file so /// <summary> comments appear in Swagger UI
     var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
     if (File.Exists(xmlPath))
@@ -37,7 +36,6 @@ builder.Services.AddSwaggerGen(options =>
         options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
     }
 
-    // Group endpoints by controller name in Swagger UI (cleaner with dual routes)
     options.TagActionsBy(api =>
     {
         if (api.GroupName != null) return new[] { api.GroupName };
@@ -50,7 +48,11 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddDbContext<LmsDbContext>(options =>
     options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sql => sql.EnableRetryOnFailure(
+            maxRetryCount: 10,
+            maxRetryDelay: TimeSpan.FromSeconds(15),
+            errorNumbersToAdd: null)));
 
 // Repository registrations (Phase 2)
 builder.Services.AddScoped<ISemesterRepository, SemesterRepository>();
@@ -68,18 +70,50 @@ builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+// ───────────────────────────────────────────────────────────
+// Auto-apply EF migrations on startup with retry (Phase 9)
+// Ensures docker compose up creates schema + seeds 5/50/10/20/500
+// ───────────────────────────────────────────────────────────
+using (var scope = app.Services.CreateScope())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    var db = scope.ServiceProvider.GetRequiredService<LmsDbContext>();
+
+    const int maxAttempts = 20;
+    for (int attempt = 1; attempt <= maxAttempts; attempt++)
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "PRN232 LMS API v1");
-        c.DocumentTitle = "PRN232 LMS API � Swagger UI";
-        c.DefaultModelsExpandDepth(-1);  // Hide schemas section by default for cleaner first impression
-    });
+        try
+        {
+            logger.LogInformation("Applying database migrations (attempt {Attempt}/{Max})...", attempt, maxAttempts);
+            db.Database.Migrate();
+            logger.LogInformation("Database migrations applied successfully.");
+            break;
+        }
+        catch (Exception ex)
+        {
+            if (attempt == maxAttempts)
+            {
+                logger.LogError(ex, "Migration failed after {Max} attempts. Continuing without DB.", maxAttempts);
+                break;
+            }
+            logger.LogWarning("DB not ready yet ({Message}). Waiting 5s before retry...", ex.Message);
+            Thread.Sleep(5000);
+        }
+    }
 }
 
-app.UseHttpsRedirection();
+// Swagger always on (in container we want it accessible)
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "PRN232 LMS API v1");
+    c.DocumentTitle = "PRN232 LMS API — Swagger UI";
+    c.DefaultModelsExpandDepth(-1);
+});
+
+// Disable HTTPS redirect inside container (we're behind nginx-less localhost)
+// app.UseHttpsRedirection();
+
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

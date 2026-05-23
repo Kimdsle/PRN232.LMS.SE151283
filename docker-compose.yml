@@ -1,0 +1,46 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: lms-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${LMS_SA_PASSWORD:?Set LMS_SA_PASSWORD in .env before running docker compose}"
+      MSSQL_PID: "Express"
+    ports:
+      - "1433:1433"
+    volumes:
+      - lms-sqldata:/var/opt/mssql
+    networks:
+      - lms-network
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -Q \"SELECT 1\" -C -No || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  api:
+    build:
+      context: .
+      dockerfile: PRN232.LMS.API/Dockerfile
+    container_name: lms-api
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=PRN232_LMS;User Id=sa;Password=${LMS_SA_PASSWORD:?Set LMS_SA_PASSWORD in .env before running docker compose};TrustServerCertificate=True;Encrypt=False;"
+    ports:
+      - "8080:8080"
+    networks:
+      - lms-network
+
+networks:
+  lms-network:
+    driver: bridge
+    name: lms-network
+
+volumes:
+  lms-sqldata:
+    name: lms-sqldata

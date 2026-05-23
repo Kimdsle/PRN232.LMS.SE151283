@@ -112,27 +112,22 @@ public class CoursesController : ControllerBase
         if (!courseCheck.Success || courseCheck.Data == null)
             return NotFound(ApiResponse<object>.NotFound($"Course {id} not found."));
 
-        var existingSearch = options.Search;
-        var courseFilter = $"CourseId={id}";
-        options.Search = string.IsNullOrWhiteSpace(existingSearch) ? courseFilter : existingSearch;
-
-        var result = await _enrollmentService.ListAsync(options);
+        var result = await _enrollmentService.ListByCourseAsync(id, options);
 
         if (!result.Success || result.Data == null)
             return BadRequest(ApiResponse<object>.Fail(result.Message));
 
-        var filtered = result.Data.Items.Where(e => e.CourseId == id).ToList();
-        var responses = filtered.Select(EnrollmentToResponse).ToList();
+        var responses = result.Data.Items.Select(EnrollmentToResponse).ToList();
 
         if (!string.IsNullOrWhiteSpace(options.Fields))
         {
             var shaped = responses.Select(r => QueryHelper.ApplyFields(r, options.Fields)).ToList();
             return Ok(PagedApiResponse<IDictionary<string, object?>>.Ok(
-                shaped, result.Data.Page, result.Data.PageSize, filtered.Count));
+                shaped, result.Data.Page, result.Data.PageSize, result.Data.TotalItems));
         }
 
         return Ok(PagedApiResponse<EnrollmentResponse>.Ok(
-            responses, result.Data.Page, result.Data.PageSize, filtered.Count));
+            responses, result.Data.Page, result.Data.PageSize, result.Data.TotalItems));
     }
 
     /// <summary>Create a new course.</summary>

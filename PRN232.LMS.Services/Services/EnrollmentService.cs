@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PRN232.LMS.Repositories.Entities;
 using PRN232.LMS.Repositories.Interfaces;
 using PRN232.LMS.Services.Helpers;
@@ -36,6 +36,38 @@ public class EnrollmentService : IEnrollmentService
         Status = m.Status
     };
 
+    private static IQueryable<Enrollment> ApplyIncludes(IQueryable<Enrollment> query, string? expand)
+    {
+        if (QueryHelper.ShouldExpand(expand, "student"))
+            query = query.Include(e => e.Student);
+        if (QueryHelper.ShouldExpand(expand, "course"))
+            query = query.Include(e => e.Course);
+
+        return query;
+    }
+
+    private static async Task<PagedResult<EnrollmentBusinessModel>> ToPagedResultAsync(
+        IQueryable<Enrollment> query,
+        ListQueryOptions options)
+    {
+        query = QueryHelper.ApplySearch(query, options.Search, x => x.Status);
+        query = QueryHelper.ApplySort(query, options.Sort, "EnrollmentId");
+
+        var total = await query.CountAsync();
+        var items = await query
+            .Skip((options.Page - 1) * options.Size)
+            .Take(options.Size)
+            .ToListAsync();
+
+        return new PagedResult<EnrollmentBusinessModel>
+        {
+            Items = items.Select(ToBusiness).ToList(),
+            Page = options.Page,
+            PageSize = options.Size,
+            TotalItems = total
+        };
+    }
+
     public async Task<BusinessResult<EnrollmentBusinessModel>> GetByIdAsync(int id)
     {
         var entity = await _repo.Query()
@@ -49,29 +81,19 @@ public class EnrollmentService : IEnrollmentService
 
     public async Task<BusinessResult<PagedResult<EnrollmentBusinessModel>>> ListAsync(ListQueryOptions options)
     {
-        IQueryable<Enrollment> query = _repo.Query();
+        var query = ApplyIncludes(_repo.Query(), options.Expand);
+        var paged = await ToPagedResultAsync(query, options);
+        return BusinessResult<PagedResult<EnrollmentBusinessModel>>.Ok(paged);
+    }
 
-        if (QueryHelper.ShouldExpand(options.Expand, "student"))
-            query = query.Include(e => e.Student);
-        if (QueryHelper.ShouldExpand(options.Expand, "course"))
-            query = query.Include(e => e.Course);
+    public async Task<BusinessResult<PagedResult<EnrollmentBusinessModel>>> ListByCourseAsync(
+        int courseId,
+        ListQueryOptions options)
+    {
+        var query = ApplyIncludes(_repo.Query(), options.Expand)
+            .Where(e => e.CourseId == courseId);
 
-        query = QueryHelper.ApplySearch(query, options.Search, x => x.Status);
-        query = QueryHelper.ApplySort(query, options.Sort, "EnrollmentId");
-
-        var total = await query.CountAsync();
-        var items = await query
-            .Skip((options.Page - 1) * options.Size)
-            .Take(options.Size)
-            .ToListAsync();
-
-        var paged = new PagedResult<EnrollmentBusinessModel>
-        {
-            Items = items.Select(ToBusiness).ToList(),
-            Page = options.Page,
-            PageSize = options.Size,
-            TotalItems = total
-        };
+        var paged = await ToPagedResultAsync(query, options);
         return BusinessResult<PagedResult<EnrollmentBusinessModel>>.Ok(paged);
     }
 
