@@ -9,6 +9,10 @@ using PRN232.LMS.Services.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddRouting(options =>
+{
+    options.LowercaseUrls = true;
+});
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 

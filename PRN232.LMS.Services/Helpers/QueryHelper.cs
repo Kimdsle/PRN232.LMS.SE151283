@@ -76,9 +76,19 @@ public static class QueryHelper
         foreach (var prop in props)
         {
             if (requested.Contains(prop.Name))
-                result[prop.Name] = prop.GetValue(obj);
+            {
+                var key = ToCamelCase(prop.Name);
+                result[key] = prop.GetValue(obj);
+            }
         }
         return result;
+    }
+
+    private static string ToCamelCase(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return name;
+        if (name.Length == 1) return name.ToLowerInvariant();
+        return char.ToLowerInvariant(name[0]) + name.Substring(1);
     }
 
     /// <summary>

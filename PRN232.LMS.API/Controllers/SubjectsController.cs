@@ -116,13 +116,13 @@ public class SubjectsController : ControllerBase
 
     /// <summary>Delete a subject.</summary>
     [HttpDelete("{id:int}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _service.DeleteAsync(id);
         if (!result.Success)
             return NotFound(ApiResponse<object>.NotFound(result.Message));
-        return NoContent();
+        return Ok(ApiResponse<object>.Ok(new { deleted = true }, result.Message));
     }
 }
