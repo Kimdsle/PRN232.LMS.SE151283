@@ -10,7 +10,6 @@ namespace PRN232.LMS.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Route("[controller]")]
 [Produces("application/json")]
 public class StudentsController : ControllerBase
 {
