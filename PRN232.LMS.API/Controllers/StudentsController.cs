@@ -11,6 +11,7 @@ namespace PRN232.LMS.API.Controllers;
 
 [ApiController]
 [ApiVersion("1.0")]
+[ApiVersion("2.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
 [Produces("application/json")]
 public class StudentsController : ControllerBase
@@ -30,6 +31,21 @@ public class StudentsController : ControllerBase
         DateOfBirth = m.DateOfBirth
     };
 
+    private static StudentResponseV2 ToResponseV2(StudentBusinessModel m)
+    {
+        var today = DateTime.Today;
+        var age = today.Year - m.DateOfBirth.Year;
+        if (m.DateOfBirth.Date > today.AddYears(-age)) age--;
+        return new()
+        {
+            StudentId = m.StudentId,
+            FullName = m.FullName,
+            Email = m.Email,
+            DateOfBirth = m.DateOfBirth,
+            Age = age
+        };
+    }
+
     private static StudentBusinessModel FromCreate(StudentCreateRequest r) => new()
     {
         FullName = r.FullName,
@@ -46,6 +62,7 @@ public class StudentsController : ControllerBase
 
     /// <summary>List students with search (name or email), sort, paging, field selection.</summary>
     [HttpGet]
+    [MapToApiVersion("1.0")]
     [ProducesResponseType(typeof(PagedApiResponse<StudentResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> List([FromQuery] ListQueryOptions options)
     {
@@ -66,6 +83,28 @@ public class StudentsController : ControllerBase
             responses, result.Data.Page, result.Data.PageSize, result.Data.TotalItems));
     }
 
+    /// <summary>List students (v2) — identical to v1 plus a computed Age field.</summary>
+    [HttpGet]
+    [MapToApiVersion("2.0")]
+    [ProducesResponseType(typeof(PagedApiResponse<StudentResponseV2>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListV2([FromQuery] ListQueryOptions options)
+    {
+        var result = await _service.ListAsync(options);
+        if (!result.Success || result.Data == null)
+            return BadRequest(ApiResponse<object>.Fail(result.Message));
+
+        var responses = result.Data.Items.Select(ToResponseV2).ToList();
+
+        if (!string.IsNullOrWhiteSpace(options.Fields))
+        {
+            var shaped = responses.Select(r => QueryHelper.ApplyFields(r, options.Fields)).ToList();
+            return Ok(PagedApiResponse<IDictionary<string, object?>>.Ok(
+                shaped, result.Data.Page, result.Data.PageSize, result.Data.TotalItems));
+        }
+
+        return Ok(PagedApiResponse<StudentResponseV2>.Ok(
+            responses, result.Data.Page, result.Data.PageSize, result.Data.TotalItems));
+    }
     /// <summary>Get a student by id.</summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<StudentResponse>), StatusCodes.Status200OK)]
