@@ -1,6 +1,8 @@
 using System.Reflection;
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
+using PRN232.LMS.API.Configuration;
 using PRN232.LMS.Repositories.Data;
 using PRN232.LMS.Repositories.Interfaces;
 using PRN232.LMS.Repositories.Repositories;
@@ -15,24 +17,20 @@ builder.Services.AddRouting(options =>
 });
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = new UrlSegmentApiVersionReader();
+})
+.AddApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "PRN232 LMS API",
-        Version = "v1",
-        Description = "ASP.NET Core 8 REST API for a Learning Management System. "
-                    + "3-layer architecture with full search, sort, paging, field "
-                    + "selection, and expansion support. Built for PRN232 Lab 1.",
-        Contact = new OpenApiContact
-        {
-            Name  = "SE151283 - Dai Kim Nguyen",
-            Email = "nguyendkse151283@fpt.edu.vn",
-            Url   = new Uri("https://github.com/Kimdsle/PRN232.LMS.SE151283")
-        }
-    });
-
     var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
     if (File.Exists(xmlPath))
@@ -42,14 +40,10 @@ builder.Services.AddSwaggerGen(options =>
 
     options.TagActionsBy(api =>
     {
-        if (api.GroupName != null) return new[] { api.GroupName };
-        var controllerName = api.ActionDescriptor.RouteValues["controller"];
-        return new[] { controllerName ?? "Default" };
+        return new[] { api.ActionDescriptor.RouteValues["controller"] ?? "Default" };
     });
-
-    options.DocInclusionPredicate((name, api) => true);
 });
-
+builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
 builder.Services.AddDbContext<LmsDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -108,9 +102,15 @@ using (var scope = app.Services.CreateScope())
 
 // Swagger always on (in container we want it accessible)
 app.UseSwagger();
+var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "PRN232 LMS API v1");
+    foreach (var description in provider.ApiVersionDescriptions)
+    {
+        c.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
+            $"PRN232 LMS API {description.GroupName.ToUpperInvariant()}");
+    }
+
     c.DocumentTitle = "PRN232 LMS API — Swagger UI";
     c.DefaultModelsExpandDepth(-1);
 });
