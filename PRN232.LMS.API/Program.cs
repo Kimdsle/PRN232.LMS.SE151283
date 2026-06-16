@@ -77,32 +77,36 @@ var app = builder.Build();
 // Auto-apply EF migrations on startup with retry (Phase 9)
 // Ensures docker compose up creates schema + seeds 5/50/10/20/500
 // ───────────────────────────────────────────────────────────
-using (var scope = app.Services.CreateScope())
+if (!EF.IsDesignTime)
 {
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    var db = scope.ServiceProvider.GetRequiredService<LmsDbContext>();
-
-    const int maxAttempts = 20;
-    for (int attempt = 1; attempt <= maxAttempts; attempt++)
+    using (var scope = app.Services.CreateScope())
     {
-        try
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        var db = scope.ServiceProvider.GetRequiredService<LmsDbContext>();
+    
+        const int maxAttempts = 20;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            logger.LogInformation("Applying database migrations (attempt {Attempt}/{Max})...", attempt, maxAttempts);
-            db.Database.Migrate();
-            logger.LogInformation("Database migrations applied successfully.");
-            break;
-        }
-        catch (Exception ex)
-        {
-            if (attempt == maxAttempts)
+            try
             {
-                logger.LogError(ex, "Migration failed after {Max} attempts. Continuing without DB.", maxAttempts);
+                logger.LogInformation("Applying database migrations (attempt {Attempt}/{Max})...", attempt, maxAttempts);
+                db.Database.Migrate();
+                logger.LogInformation("Database migrations applied successfully.");
                 break;
             }
-            logger.LogWarning("DB not ready yet ({Message}). Waiting 5s before retry...", ex.Message);
-            Thread.Sleep(5000);
+            catch (Exception ex)
+            {
+                if (attempt == maxAttempts)
+                {
+                    logger.LogError(ex, "Migration failed after {Max} attempts. Continuing without DB.", maxAttempts);
+                    break;
+                }
+                logger.LogWarning("DB not ready yet ({Message}). Waiting 5s before retry...", ex.Message);
+                Thread.Sleep(5000);
+            }
         }
     }
+    
 }
 
 app.UseMiddleware<RequestLoggingMiddleware>();

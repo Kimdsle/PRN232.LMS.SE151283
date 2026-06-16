@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PRN232.LMS.Repositories.Entities;
 using PRN232.LMS.Repositories.Interfaces;
 using PRN232.LMS.Services.Helpers;
@@ -21,7 +21,8 @@ public class StudentService : IStudentService
         StudentId = e.StudentId,
         FullName = e.FullName,
         Email = e.Email,
-        DateOfBirth = e.DateOfBirth
+        DateOfBirth = e.DateOfBirth,
+        Phone = e.Phone
     };
 
     private static Student ToEntity(StudentBusinessModel m) => new()
@@ -29,7 +30,8 @@ public class StudentService : IStudentService
         StudentId = m.StudentId,
         FullName = m.FullName,
         Email = m.Email,
-        DateOfBirth = m.DateOfBirth
+        DateOfBirth = m.DateOfBirth,
+        Phone = m.Phone
     };
 
     public async Task<BusinessResult<StudentBusinessModel>> GetByIdAsync(int id)
@@ -80,6 +82,7 @@ public class StudentService : IStudentService
         existing.FullName = model.FullName;
         existing.Email = model.Email;
         existing.DateOfBirth = model.DateOfBirth;
+        existing.Phone = model.Phone;
         await _repo.UpdateAsync(existing);
         await _repo.SaveChangesAsync();
         return BusinessResult<StudentBusinessModel>.Ok(ToBusiness(existing), "Student updated.");

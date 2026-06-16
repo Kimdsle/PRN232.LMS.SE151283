@@ -27,7 +27,8 @@ public class StudentsController : ControllerBase
         StudentId = m.StudentId,
         FullName = m.FullName,
         Email = m.Email,
-        DateOfBirth = m.DateOfBirth
+        DateOfBirth = m.DateOfBirth,
+        Phone = m.Phone
     };
 
     private static StudentResponseV2 ToResponseV2(StudentBusinessModel m)
@@ -41,6 +42,7 @@ public class StudentsController : ControllerBase
             FullName = m.FullName,
             Email = m.Email,
             DateOfBirth = m.DateOfBirth,
+            Phone = m.Phone,
             Age = age
         };
     }
@@ -49,14 +51,16 @@ public class StudentsController : ControllerBase
     {
         FullName = r.FullName,
         Email = r.Email,
-        DateOfBirth = r.DateOfBirth
+        DateOfBirth = r.DateOfBirth,
+        Phone = r.Phone
     };
 
     private static StudentBusinessModel FromUpdate(StudentUpdateRequest r) => new()
     {
         FullName = r.FullName,
         Email = r.Email,
-        DateOfBirth = r.DateOfBirth
+        DateOfBirth = r.DateOfBirth,
+        Phone = r.Phone
     };
 
     /// <summary>List students with search (name or email), sort, paging, field selection.</summary>
@@ -104,6 +108,7 @@ public class StudentsController : ControllerBase
         return Ok(PagedApiResponse<StudentResponseV2>.Ok(
             responses, result.Data.Page, result.Data.PageSize, result.Data.TotalItems));
     }
+
     /// <summary>Get a student by id.</summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<StudentResponse>), StatusCodes.Status200OK)]
