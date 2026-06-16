@@ -3,6 +3,7 @@ using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
 using Microsoft.EntityFrameworkCore;
 using PRN232.LMS.API.Configuration;
+using PRN232.LMS.API.Middleware;
 using PRN232.LMS.Repositories.Data;
 using PRN232.LMS.Repositories.Interfaces;
 using PRN232.LMS.Repositories.Repositories;
@@ -100,6 +101,9 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+app.UseMiddleware<RequestLoggingMiddleware>();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 // Swagger always on (in container we want it accessible)
 app.UseSwagger();
 var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
@@ -111,7 +115,7 @@ app.UseSwaggerUI(c =>
             $"PRN232 LMS API {description.GroupName.ToUpperInvariant()}");
     }
 
-    c.DocumentTitle = "PRN232 LMS API — Swagger UI";
+    c.DocumentTitle = "PRN232 LMS API - Swagger UI";
     c.DefaultModelsExpandDepth(-1);
 });
 
