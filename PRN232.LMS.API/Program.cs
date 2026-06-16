@@ -1,7 +1,9 @@
 using System.Reflection;
 using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PRN232.LMS.API.Common;
 using PRN232.LMS.API.Configuration;
 using PRN232.LMS.API.Middleware;
 using PRN232.LMS.Repositories.Data;
@@ -20,7 +22,19 @@ builder.Services.AddControllers(options =>
 {
     options.ReturnHttpNotAcceptable = true;
 })
-.AddXmlSerializerFormatters();
+.AddXmlSerializerFormatters()
+.ConfigureApiBehaviorOptions(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(e => e.Value is not null && e.Value.Errors.Count > 0)
+            .SelectMany(e => e.Value!.Errors.Select(x => x.ErrorMessage))
+            .Where(m => !string.IsNullOrWhiteSpace(m))
+            .ToList();
+        return new BadRequestObjectResult(ApiResponse<object>.Fail("Validation failed", errors));
+    };
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddApiVersioning(options =>
 {
