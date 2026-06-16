@@ -16,7 +16,11 @@ builder.Services.AddRouting(options =>
 {
     options.LowercaseUrls = true;
 });
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.ReturnHttpNotAcceptable = true;
+})
+.AddXmlSerializerFormatters();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddApiVersioning(options =>
 {
