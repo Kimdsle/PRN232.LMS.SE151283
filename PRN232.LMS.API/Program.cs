@@ -1,11 +1,14 @@
 using System.Reflection;
 using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PRN232.LMS.API.Common;
 using PRN232.LMS.API.Configuration;
 using PRN232.LMS.API.Middleware;
+using PRN232.LMS.API.Validation;
 using PRN232.LMS.Repositories.Data;
 using PRN232.LMS.Repositories.Interfaces;
 using PRN232.LMS.Repositories.Repositories;
@@ -35,6 +38,8 @@ builder.Services.AddControllers(options =>
         return new BadRequestObjectResult(ApiResponse<object>.Fail("Validation failed", errors));
     };
 });
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<CourseCreateRequestValidator>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddApiVersioning(options =>
 {

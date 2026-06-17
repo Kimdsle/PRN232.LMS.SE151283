@@ -109,11 +109,18 @@ public class StudentsController : ControllerBase
             responses, result.Data.Page, result.Data.PageSize, result.Data.TotalItems));
     }
 
+    /// <summary>Return request metadata supplied through headers.</summary>
+    [HttpGet("request-info")]
+    public IActionResult RequestInfo([FromHeader(Name = "X-Request-Id")] string? requestId)
+    {
+        return Ok(ApiResponse<object>.Ok(new { receivedRequestId = requestId }));
+    }
+
     /// <summary>Get a student by id.</summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<StudentResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(int id, [FromQuery] string? fields = null)
+    public async Task<IActionResult> GetById([FromRoute] int id, [FromQuery] string? fields = null)
     {
         var result = await _service.GetByIdAsync(id);
         if (!result.Success || result.Data == null)
@@ -149,7 +156,7 @@ public class StudentsController : ControllerBase
     [HttpPut("{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<StudentResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Update(int id, [FromBody] StudentUpdateRequest request)
+    public async Task<IActionResult> Update([FromRoute] int id, [FromBody] StudentUpdateRequest request)
     {
         var result = await _service.UpdateAsync(id, FromUpdate(request));
         if (!result.Success || result.Data == null)
@@ -162,7 +169,7 @@ public class StudentsController : ControllerBase
     [HttpDelete("{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete([FromRoute] int id)
     {
         var result = await _service.DeleteAsync(id);
         if (!result.Success)

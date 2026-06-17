@@ -69,7 +69,7 @@ public class SemestersController : ControllerBase
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<SemesterResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(int id, [FromQuery] string? fields = null)
+    public async Task<IActionResult> GetById([FromRoute] int id, [FromQuery] string? fields = null)
     {
         var result = await _service.GetByIdAsync(id);
         if (!result.Success || result.Data == null)
@@ -105,7 +105,7 @@ public class SemestersController : ControllerBase
     [HttpPut("{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<SemesterResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Update(int id, [FromBody] SemesterUpdateRequest request)
+    public async Task<IActionResult> Update([FromRoute] int id, [FromBody] SemesterUpdateRequest request)
     {
         var result = await _service.UpdateAsync(id, FromUpdate(request));
         if (!result.Success || result.Data == null)
@@ -118,7 +118,7 @@ public class SemestersController : ControllerBase
     [HttpDelete("{id:int}")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete([FromRoute] int id)
     {
         var result = await _service.DeleteAsync(id);
         if (!result.Success)
