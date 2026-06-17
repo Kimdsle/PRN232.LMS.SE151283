@@ -13,6 +13,7 @@ using PRN232.LMS.Repositories.Data;
 using PRN232.LMS.Repositories.Interfaces;
 using PRN232.LMS.Repositories.Repositories;
 using PRN232.LMS.Services.Interfaces;
+using PRN232.LMS.Services.Seeding;
 using PRN232.LMS.Services.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -110,6 +111,7 @@ if (!EF.IsDesignTime)
             {
                 logger.LogInformation("Applying database migrations (attempt {Attempt}/{Max})...", attempt, maxAttempts);
                 db.Database.Migrate();
+                DbSeeder.EnsureAdminUser(db);
                 logger.LogInformation("Database migrations applied successfully.");
                 break;
             }

@@ -12,6 +12,8 @@ public class LmsDbContext : DbContext
     public DbSet<Subject> Subjects => Set<Subject>();
     public DbSet<Student> Students => Set<Student>();
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -66,6 +68,29 @@ public class LmsDbContext : DbContext
             e.HasOne(x => x.Course)
                 .WithMany(c => c.Enrollments)
                 .HasForeignKey(x => x.CourseId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<User>(e =>
+        {
+            e.ToTable("User");
+            e.HasKey(x => x.UserId);
+            e.Property(x => x.Username).HasMaxLength(100).IsRequired();
+            e.Property(x => x.PasswordHash).IsRequired();
+            e.Property(x => x.Role).HasMaxLength(50).IsRequired();
+            e.HasIndex(x => x.Username).IsUnique();
+        });
+
+        modelBuilder.Entity<RefreshToken>(e =>
+        {
+            e.ToTable("RefreshToken");
+            e.HasKey(x => x.RefreshTokenId);
+            e.Property(x => x.Token).HasMaxLength(256).IsRequired();
+            e.Property(x => x.ExpiresAt).HasColumnType("datetime2");
+            e.Property(x => x.CreatedAt).HasColumnType("datetime2");
+            e.HasOne(x => x.User)
+                .WithMany(u => u.RefreshTokens)
+                .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
