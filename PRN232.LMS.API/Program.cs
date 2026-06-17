@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using PRN232.LMS.API.Common;
 using PRN232.LMS.API.Configuration;
 using PRN232.LMS.API.Middleware;
@@ -70,6 +71,26 @@ builder.Services.AddSwaggerGen(options =>
     options.TagActionsBy(api =>
     {
         return new[] { api.ActionDescriptor.RouteValues["controller"] ?? "Default" };
+    });
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Paste your JWT access token here (no 'Bearer ' prefix needed)."
+    });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            Array.Empty<string>()
+        }
     });
 });
 builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
