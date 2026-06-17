@@ -39,4 +39,16 @@ public class AuthController : ControllerBase
         var role = User.FindFirstValue(ClaimTypes.Role);
         return Ok(ApiResponse<object>.Ok(new { userId, username, role }, "Current user"));
     }
+
+    /// <summary>Exchanges a valid refresh token for a new access + refresh token pair.</summary>
+    [HttpPost("refresh-token")]
+    [ProducesResponseType(typeof(ApiResponse<LoginResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+    {
+        var tokens = await _authService.RefreshAsync(request.RefreshToken);
+        if (tokens is null) return Unauthorized(ApiResponse<object>.Fail("Invalid or expired refresh token"));
+        var response = new LoginResponse { AccessToken = tokens.AccessToken, RefreshToken = tokens.RefreshToken, ExpiresIn = tokens.ExpiresIn };
+        return Ok(ApiResponse<LoginResponse>.Ok(response, "Token refreshed"));
+    }
 }
