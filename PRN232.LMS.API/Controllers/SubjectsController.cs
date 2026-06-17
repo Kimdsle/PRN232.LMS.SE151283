@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PRN232.LMS.API.Common;
 using PRN232.LMS.API.Models.Requests;
@@ -88,6 +89,7 @@ public class SubjectsController : ControllerBase
 
     /// <summary>Create a new subject.</summary>
     [HttpPost]
+    [Authorize]
     [ProducesResponseType(typeof(ApiResponse<SubjectResponse>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] SubjectCreateRequest request)
@@ -103,6 +105,7 @@ public class SubjectsController : ControllerBase
 
     /// <summary>Update an existing subject.</summary>
     [HttpPut("{id:int}")]
+    [Authorize]
     [ProducesResponseType(typeof(ApiResponse<SubjectResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update([FromRoute] int id, [FromBody] SubjectUpdateRequest request)
@@ -116,6 +119,7 @@ public class SubjectsController : ControllerBase
 
     /// <summary>Delete a subject.</summary>
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete([FromRoute] int id)

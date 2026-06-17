@@ -3,8 +3,10 @@ using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using PRN232.LMS.API.Common;
 using PRN232.LMS.API.Configuration;
 using PRN232.LMS.API.Middleware;
@@ -16,6 +18,7 @@ using PRN232.LMS.Services.Auth;
 using PRN232.LMS.Services.Interfaces;
 using PRN232.LMS.Services.Seeding;
 using PRN232.LMS.Services.Services;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -95,6 +98,22 @@ builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 builder.Services.AddScoped<ITokenService, TokenService>();
+var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()!;
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtSettings.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtSettings.Audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromSeconds(30)
+        };
+    });
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 var app = builder.Build();
@@ -117,7 +136,7 @@ if (!EF.IsDesignTime)
             {
                 logger.LogInformation("Applying database migrations (attempt {Attempt}/{Max})...", attempt, maxAttempts);
                 db.Database.Migrate();
-                DbSeeder.EnsureAdminUser(db);
+                DbSeeder.SeedUsers(db);
                 logger.LogInformation("Database migrations applied successfully.");
                 break;
             }
@@ -157,6 +176,7 @@ app.UseSwaggerUI(c =>
 // Disable HTTPS redirect inside container (we're behind nginx-less localhost)
 // app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

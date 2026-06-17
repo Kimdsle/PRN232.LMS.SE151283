@@ -5,8 +5,9 @@ namespace PRN232.LMS.Services.Seeding;
 
 public static class DbSeeder
 {
-    public static void EnsureAdminUser(LmsDbContext db)
+    public static void SeedUsers(LmsDbContext db)
     {
+        var added = false;
         if (!db.Users.Any(u => u.Username == "admin"))
         {
             db.Users.Add(new User
@@ -15,12 +16,20 @@ public static class DbSeeder
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
                 Role = "Admin"
             });
-            db.SaveChanges();
             Console.WriteLine("[Seed] Admin user created");
+            added = true;
         }
-        else
+        if (!db.Users.Any(u => u.Username == "user"))
         {
-            Console.WriteLine("[Seed] Admin user already present");
+            db.Users.Add(new User
+            {
+                Username = "user",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                Role = "Student"
+            });
+            Console.WriteLine("[Seed] Regular user (Student) created");
+            added = true;
         }
+        if (added) db.SaveChanges();
     }
 }

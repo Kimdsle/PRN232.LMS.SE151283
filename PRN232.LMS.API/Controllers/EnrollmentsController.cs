@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PRN232.LMS.API.Common;
 using PRN232.LMS.API.Models.Requests;
@@ -96,6 +97,7 @@ public class EnrollmentsController : ControllerBase
 
     /// <summary>Create a new enrollment.</summary>
     [HttpPost]
+    [Authorize]
     [ProducesResponseType(typeof(ApiResponse<EnrollmentResponse>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] EnrollmentCreateRequest request)
@@ -111,6 +113,7 @@ public class EnrollmentsController : ControllerBase
 
     /// <summary>Update an existing enrollment.</summary>
     [HttpPut("{id:int}")]
+    [Authorize]
     [ProducesResponseType(typeof(ApiResponse<EnrollmentResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update([FromRoute] int id, [FromBody] EnrollmentUpdateRequest request)
@@ -124,6 +127,7 @@ public class EnrollmentsController : ControllerBase
 
     /// <summary>Delete an enrollment.</summary>
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete([FromRoute] int id)

@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PRN232.LMS.API.Common;
 using PRN232.LMS.API.Models.Requests;
@@ -86,7 +87,7 @@ public class StudentsController : ControllerBase
             responses, result.Data.Page, result.Data.PageSize, result.Data.TotalItems));
     }
 
-    /// <summary>List students (v2) — identical to v1 plus a computed Age field.</summary>
+    /// <summary>List students (v2) â€” identical to v1 plus a computed Age field.</summary>
     [HttpGet]
     [MapToApiVersion("2.0")]
     [ProducesResponseType(typeof(PagedApiResponse<StudentResponseV2>), StatusCodes.Status200OK)]
@@ -139,6 +140,7 @@ public class StudentsController : ControllerBase
 
     /// <summary>Create a new student.</summary>
     [HttpPost]
+    [Authorize]
     [ProducesResponseType(typeof(ApiResponse<StudentResponse>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] StudentCreateRequest request)
@@ -154,6 +156,7 @@ public class StudentsController : ControllerBase
 
     /// <summary>Update an existing student.</summary>
     [HttpPut("{id:int}")]
+    [Authorize]
     [ProducesResponseType(typeof(ApiResponse<StudentResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update([FromRoute] int id, [FromBody] StudentUpdateRequest request)
@@ -167,6 +170,7 @@ public class StudentsController : ControllerBase
 
     /// <summary>Delete a student.</summary>
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete([FromRoute] int id)

@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PRN232.LMS.API.Common;
 using PRN232.LMS.API.Models.Requests;
@@ -88,6 +89,7 @@ public class SemestersController : ControllerBase
 
     /// <summary>Create a new semester.</summary>
     [HttpPost]
+    [Authorize]
     [ProducesResponseType(typeof(ApiResponse<SemesterResponse>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] SemesterCreateRequest request)
@@ -103,6 +105,7 @@ public class SemestersController : ControllerBase
 
     /// <summary>Update an existing semester.</summary>
     [HttpPut("{id:int}")]
+    [Authorize]
     [ProducesResponseType(typeof(ApiResponse<SemesterResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update([FromRoute] int id, [FromBody] SemesterUpdateRequest request)
@@ -116,6 +119,7 @@ public class SemestersController : ControllerBase
 
     /// <summary>Delete a semester.</summary>
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete([FromRoute] int id)
