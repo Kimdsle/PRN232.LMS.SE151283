@@ -118,7 +118,7 @@ public class StudentsController : ControllerBase
     }
 
     /// <summary>Get a student by id.</summary>
-    [HttpGet("{id:int}")]
+    [HttpGet("{id:int}", Name = "GetStudentById")]
     [ProducesResponseType(typeof(ApiResponse<StudentResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById([FromRoute] int id, [FromQuery] string? fields = null)
