@@ -30,6 +30,7 @@ builder.Services.AddRouting(options =>
 builder.Services.AddControllers(options =>
 {
     options.ReturnHttpNotAcceptable = true;
+    options.Filters.Add(new ProducesAttribute("application/json", "application/xml"));
 })
 .AddXmlSerializerFormatters()
 .ConfigureApiBehaviorOptions(options =>
