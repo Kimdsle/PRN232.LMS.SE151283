@@ -14,21 +14,25 @@ ASP.NET Core 8 RESTful API for a Learning Management System, built on a 3-layer 
 The fastest way to run this project end-to-end:
 
 ```powershell
-# 1. Clone the repository
 git clone https://github.com/Kimdsle/PRN232.LMS.SE151283.git
-cd PRN232.LMS.SE151283
+cd PRN232.LMS.SE151283\src
+docker compose up -d --build
+```
 
-# 2. Create the local .env file (the .env file is NOT committed for security)
+After cloning, the solution and `docker-compose.yml` live in the `src/` folder, so all
+docker compose commands must be run from `PRN232.LMS.SE151283\src`.
+
+Secrets are optional: `docker-compose.yml` ships with safe `:-default` values for the SA
+password and JWT secret, so the stack comes up with **no `.env` required**. To override
+them, create an `.env` file in `src/` (the `.env` file is NOT committed for security):
+
+```powershell
 # Use any strong SA password matching SQL Server's complexity policy
 "LMS_SA_PASSWORD=YourStrong@Password2026!" | Out-File -Encoding UTF8 .env
-
-# 3. Build and start the stack (SQL Server + API)
-docker compose up -d
-
-# 4. Wait ~60 seconds for SQL Server to initialize and seed data to load.
-# Then open Swagger UI at:
-#   http://localhost:8080/swagger
 ```
+
+Wait ~60 seconds for SQL Server to initialize and seed data to load, then open Swagger UI at
+http://localhost:8080/swagger.
 
 After startup:
 - API:                  http://localhost:8080
