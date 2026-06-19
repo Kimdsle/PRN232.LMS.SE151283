@@ -75,9 +75,9 @@ public class LmsDbContext : DbContext
         {
             e.ToTable("User");
             e.HasKey(x => x.UserId);
-            e.Property(x => x.Username).HasMaxLength(100).IsRequired();
-            e.Property(x => x.PasswordHash).IsRequired();
-            e.Property(x => x.Role).HasMaxLength(50).IsRequired();
+            e.Property(x => x.Username).HasMaxLength(50).IsUnicode(false).IsRequired();
+            e.Property(x => x.PasswordHash).HasMaxLength(255).IsUnicode(false).IsRequired();
+            e.Property(x => x.Role).HasMaxLength(20).IsUnicode(false).IsRequired();
             e.HasIndex(x => x.Username).IsUnique();
         });
 
